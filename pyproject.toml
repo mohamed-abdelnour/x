@@ -1,0 +1,22 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "lifehash"
+version = "0.1.0"
+
+[project.scripts]
+lifehash = "lifehash._bin:main"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D", "PTH123"]
+isort.required-imports = ["from __future__ import annotations"]
+
+[tool.scikit-build]
+cmake.args = ["--preset=scikit-build"]
+wheel.license-files = []

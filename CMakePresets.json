@@ -1,0 +1,36 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "0",
+      "hidden": true,
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/target/cmake",
+      "warnings": { "uninitialized": true },
+      "cacheVariables": {
+        "CMAKE_COLOR_DIAGNOSTICS": true,
+        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+        "CMAKE_CXX_EXTENSIONS": false,
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_DEFAULT_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": true,
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG": false,
+        "PYBIND11_FINDPYTHON": true
+      }
+    },
+    {
+      "name": ",",
+      "inherits": "0",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "SKBUILD_PROJECT_NAME": "lifehash",
+        "SKBUILD_PROJECT_VERSION": "0.1.0"
+      }
+    },
+    { "name": "scikit-build", "inherits": "0" }
+  ],
+  "buildPresets": [
+    { "name": ",", "configurePreset": "," },
+    { "name": "scikit-build", "configurePreset": "scikit-build" }
+  ]
+}

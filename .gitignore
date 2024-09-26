@@ -1,0 +1,9 @@
+/.cache/
+/target/
+
+/.lifehash*
+/compile_commands.json
+/result
+/result-*
+
+__pycache__/
