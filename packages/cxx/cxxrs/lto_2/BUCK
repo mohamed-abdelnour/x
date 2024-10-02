@@ -1,0 +1,17 @@
+load("//packages/buck/cxxrs:cfg.bzl", "cxxrs_cfg")
+load("//packages/buck/cxxrs:tag.bzl", "cxxrs_tag")
+
+cxxrs_tag.known()
+
+cxx_binary(
+    name="cxxrs_lto_2",
+    srcs=["//packages/rust/cxxrs/lto_2_rs:cxxrs_lto_2_rs.cxx", "src/main.cxx"],
+    header_namespace="cxxrs/lto_2",
+    headers=["//packages/rust/cxxrs/lto_2_rs:cxxrs_lto_2_rs.cxx[hxx]"],
+    include_directories=["include"],
+    deps=["//packages/rust/cxxrs/lto_2_rs:cxxrs_lto_2_rs"],
+    link_style=cxxrs_cfg.if_.build_profile(
+        {cxxrs_cfg.const.build_profile.DEBUG: "shared"},
+        "static",
+    ),
+)

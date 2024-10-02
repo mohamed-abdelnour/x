@@ -1,0 +1,29 @@
+{
+  "nodes": {
+    "cxxrs_cfg_transitions": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-mQSbyZXzL24qnDQgpSKlsCMGMBQ/MPyUDog5ATe65Ec=",
+        "path": "toml_transitions/",
+        "type": "path"
+      },
+      "original": {
+        "path": "toml_transitions/",
+        "type": "path"
+      }
+    },
+    "root": {
+      "inputs": {
+        "cxxrs_cfg_transitions": "cxxrs_cfg_transitions",
+        "nixpkgs": []
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

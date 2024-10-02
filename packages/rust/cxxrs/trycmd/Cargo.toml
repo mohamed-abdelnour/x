@@ -1,0 +1,8 @@
+[package]
+name = "cxxrs_trycmd"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+trycmd.workspace = true
+which.workspace = true

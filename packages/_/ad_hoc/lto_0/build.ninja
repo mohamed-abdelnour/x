@@ -1,0 +1,94 @@
+builddir = target
+__dir_artifact = $builddir/artifact
+
+_dir_archive = $builddir/intermediate
+_dir_object = $builddir/intermediate
+
+_dir_bin = $__dir_artifact/bin
+_dir_dump = $__dir_artifact/dump
+_dir_lib = $__dir_artifact/lib
+
+ar_flags = crus
+
+cxx_flags = $
+  -O3 $
+  -flto="$${_CXXRS_LTO:-thin}"
+
+link_flags = $cxx_flags
+
+objdump_flags = -Mintel
+
+rustc_flags = $
+  --codegen=codegen-units=1 $
+  --codegen=linker-plugin-lto $
+  --codegen=opt-level=3 $
+  --codegen=panic=abort $
+  --crate-name=rs $
+  --emit=link
+
+rule ar
+  command = "$$AR" $ar_flags $out $in
+
+rule cxx
+  command = "$$CXX" $cxx_flags -o$out $in
+
+rule link
+  command = "$$CC" $link_flags -o$out $in
+
+rule objdump
+  command = "$$OBJDUMP" $objdump_flags --disassemble-symbols=$objdump_symbols $in >$out
+
+rule rustc
+  command = rustc $rustc_flags $in
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ Intermediates                                                              │
+# └────────────────────────────────────────────────────────────────────────────┘
+build $_dir_object/libcxx.o: cxx src/lib.cxx
+  cxx_flags = $cxx_flags -c
+
+build $_dir_archive/libcxx.a: ar $_dir_object/libcxx.o
+
+build $_dir_archive/librs.a: rustc src/lib.rs
+  rustc_flags = $rustc_flags $
+    --crate-type=staticlib $
+    --out-dir=$_dir_archive
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ Shared Libraries                                                           │
+# └────────────────────────────────────────────────────────────────────────────┘
+build $_dir_lib/libcxx.so: link $_dir_object/libcxx.o $_dir_archive/librs.a
+  link_flags = $link_flags --shared
+
+build $_dir_lib/librs.so: rustc src/lib.rs | $_dir_archive/libcxx.a
+  rustc_flags = $rustc_flags $
+    --crate-type=cdylib $
+    --out-dir=$_dir_lib $
+    -L$_dir_archive $
+    -lstatic=cxx
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ Binaries                                                                   │
+# └────────────────────────────────────────────────────────────────────────────┘
+build $_dir_bin/cxx: cxx $_dir_archive/libcxx.a $_dir_archive/librs.a src/main.cxx.cxx | src/bin.hxx
+build $_dir_bin/rs: cxx $_dir_archive/libcxx.a $_dir_archive/librs.a src/main.rs.cxx | src/bin.hxx
+
+build $_dir_bin/cxx.const: cxx $_dir_archive/libcxx.a $_dir_archive/librs.a src/main.cxx.const.cxx | src/bin.hxx
+build $_dir_bin/rs.const: cxx $_dir_archive/libcxx.a $_dir_archive/librs.a src/main.rs.const.cxx | src/bin.hxx
+
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │ Dumps                                                                      │
+# └────────────────────────────────────────────────────────────────────────────┘
+build $_dir_dump/libcxx.so.objdump: objdump $_dir_lib/libcxx.so
+  objdump_symbols = cxx
+
+build $_dir_dump/librs.so.objdump: objdump $_dir_lib/librs.so
+  objdump_symbols = rs
+
+objdump_symbols = main
+
+build $_dir_dump/cxx.objdump: objdump $_dir_bin/cxx
+build $_dir_dump/rs.objdump: objdump $_dir_bin/rs
+
+build $_dir_dump/cxx.const.objdump: objdump $_dir_bin/cxx.const
+build $_dir_dump/rs.const.objdump: objdump $_dir_bin/rs.const

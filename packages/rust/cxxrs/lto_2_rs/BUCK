@@ -1,0 +1,19 @@
+load("//packages/buck/cxxrs:dev.bzl", "cxxrs_dev")
+load("//packages/buck/cxxrs:rust.bzl", "cxxrs_rust")
+load("//packages/buck/cxxrs:tag.bzl", "cxxrs_tag")
+
+cxxrs_tag.known()
+
+cxxrs_rust.lib(
+    name="cxxrs_lto_2_rs",
+    visibility=["//packages/cxx/cxxrs/lto_2:cxxrs_lto_2"],
+    srcs=["src/lib.rs"],
+    deps=["//packages/rust/_0/reindeer:cxx"],
+)
+
+cxxrs_dev.cxxbridge(
+    name="cxxrs_lto_2_rs.cxx",
+    visibility=["//packages/cxx/cxxrs/lto_2:cxxrs_lto_2"],
+    srcs=["src/lib.rs"],
+    with_hacks=True,
+)

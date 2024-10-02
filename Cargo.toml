@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = ["packages/rust/_0/*/", "packages/rust/cxxrs/*/"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+# 1. `error-stack` has a weak dependency on `anyhow`; [this causes `anyhow` to end
+#    up in `Cargo.lock`][0] and propagate to `reindeer buckify`.
+#
+# [0]: https://github.com/rust-lang/cargo/issues/10801
+[workspace.dependencies]
+cxx = "1.0.128"
+error-stack = "0.5.0"
+serde_json = "1.0.128"
+tracing = "0.1.40"
+trycmd = "0.15.7"
+valuable = "0.1.0"
+which = "6.0.3"
+
+[workspace.dependencies.cxx-build]
+version = "1.0.128"
+features = ["parallel"]
+
+[workspace.dependencies.serde]
+version = "1.0.210"
+features = ["derive"]
+
+[workspace.dependencies.tracing-subscriber]
+version = "0.3.18"
+features = ["env-filter", "json", "valuable"]
+
+[profile.dev.package]
+"*".incremental = false
+cxxrs_lto_2_rs.opt-level = 1
+cxxrs_nix_rs.opt-level = 1
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+panic = "abort"
+strip = true
+
+[profile.release_panic_unwind]
+inherits = "release"
+panic = "unwind"

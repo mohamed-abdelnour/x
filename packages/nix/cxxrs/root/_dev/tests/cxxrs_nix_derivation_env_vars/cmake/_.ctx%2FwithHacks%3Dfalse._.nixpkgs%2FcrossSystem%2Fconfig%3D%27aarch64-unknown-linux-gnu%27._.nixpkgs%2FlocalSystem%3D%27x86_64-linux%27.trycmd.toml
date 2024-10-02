@@ -1,0 +1,11 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = [
+  "_.ctx/withHacks=false._.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake",
+]
+stdout = '''
+{
+  "$NIX_STORE/rmr6kqdwlh88rpix8zjc8abjqhss3swl-cxxrs.cmake-aarch64-unknown-linux-gnu-0.1.0.drv": {
+    "CXXRS_WITH_HACKS": false
+  }
+}
+'''

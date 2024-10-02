@@ -1,0 +1,44 @@
+load("//packages/buck/cxxrs:rust.bzl", "cxxrs_rust")
+load("//packages/buck/cxxrs:tag.bzl", "cxxrs_tag")
+
+cxxrs_tag.known()
+
+# TODO: Co-locating a library with binaries is a common pattern; it may be useful
+# to implement a rule for it. It may also be nicer to expose the binaries as
+# sub-targets as opposed to top-level targets.
+
+_crate = "cxxrs_dev"
+
+_names = struct(
+    bin=f"{_crate}.bin",
+    lib=f"{_crate}.lib",
+)
+
+_srcs = struct(
+    bin=("src/main.rs",),
+    lib=("src/**/*.rs",),
+)
+
+_targets = struct(lib=":" + _names.lib)
+
+cxxrs_rust.lib(
+    name=_names.lib,
+    crate=_crate,
+    srcs=glob(_srcs.lib, exclude=_srcs.bin),
+    deps=[
+        "//packages/rust/_0/reindeer:error-stack",
+        "//packages/rust/_0/reindeer:serde",
+        "//packages/rust/_0/reindeer:serde_json",
+        "//packages/rust/_0/reindeer:tracing",
+        "//packages/rust/_0/reindeer:tracing-subscriber",
+        "//packages/rust/_0/reindeer:valuable",
+    ],
+)
+
+cxxrs_rust.bin(
+    name=_names.bin,
+    visibility=["PUBLIC"],
+    crate=_crate,
+    srcs=_srcs.bin,
+    deps=[_targets.lib],
+)

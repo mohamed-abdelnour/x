@@ -1,0 +1,9 @@
+[toolchain]
+# Last `nightly` before [`Update to LLVM 19`][0].
+#
+# <!-- prettier-ignore -->
+# [0]: https://github.com/rust-lang/rust/commit/579ab05e76f1434f3074195c7291895f1257bc97
+channel = "nightly-2024-07-31"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
+targets = ["aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]

@@ -1,0 +1,11 @@
+{
+  "prettier": {
+    "proseWrap": "always",
+    "overrides": [
+      {
+        "files": "package.json",
+        "options": { "parser": "json" }
+      }
+    ]
+  }
+}

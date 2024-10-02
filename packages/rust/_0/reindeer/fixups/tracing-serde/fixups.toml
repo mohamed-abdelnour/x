@@ -1,0 +1,4 @@
+extra_deps = [
+  "//packages/rust/_0/reindeer/extern/valuable:valuable_crate",
+  ":valuable-serde",
+]

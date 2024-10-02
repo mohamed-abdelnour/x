@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: BlockIndent
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+ColumnLimit: 100
+FixNamespaceComments: false
+IndentExternBlock: Indent
+NamespaceIndentation: All

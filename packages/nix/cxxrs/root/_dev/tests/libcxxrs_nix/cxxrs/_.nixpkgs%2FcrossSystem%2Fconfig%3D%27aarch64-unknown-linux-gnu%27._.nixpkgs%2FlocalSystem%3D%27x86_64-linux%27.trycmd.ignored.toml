@@ -1,0 +1,12 @@
+bin.name = "nix"
+args = [
+  "run",
+  "#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver",
+  "--",
+  "eval",
+  "--expr",
+  "builtins.cxxrs",
+]
+stdout = '''
+{ VERSION = "0.1.0"; fib = { _0 = «primop cxxrs::fib::_0»; _1 = «primop cxxrs::fib::_1»; }; ptr = { eq = «primop cxxrs::ptr::eq»; }; }
+'''

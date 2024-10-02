@@ -1,0 +1,23 @@
+bin.name = "nix"
+env.add.NIX_CONFIG = "warn-dirty = false"
+args = [
+  "run",
+  "#_.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver",
+  "--",
+  "eval",
+  "--expr",
+  "builtins.cxxrs.fib._0 builtins",
+]
+status.code = 1
+stderr = """
+...
+error:
+       … while calling the 'cxxrs::fib::_0' builtin
+         at «string»:1:1:
+            1| builtins.cxxrs.fib._0 builtins
+             | ^
+
+       … while evaluating: [0]
+
+       error: expected an integer but found a set: { abort = «primop abort»; add = «primop add»; addDrvOutputDependencies = «primop addDrvOutputDependencies»; addErrorContext = «primop addErrorContext»; all = «primop all»; any = «primop any»; appendContext = «primop appendContext»; attrNames = «primop attrNames»; attrValues = «primop attrValues»; baseNameOf = «primop baseNameOf»; «107 attributes elided» }
+"""

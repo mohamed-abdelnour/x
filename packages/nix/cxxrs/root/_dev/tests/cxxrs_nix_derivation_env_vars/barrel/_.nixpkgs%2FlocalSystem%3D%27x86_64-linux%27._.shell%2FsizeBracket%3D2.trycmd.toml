@@ -1,0 +1,14 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = [
+  "_.nixpkgs/localSystem='x86_64-linux'._.shell/sizeBracket=2.packages.barrel",
+]
+stdout = '''
+{
+  "$NIX_STORE/2grlgqr2y4x9r13ix6jfswa2db7savs1-cxxrs.barrel-0.1.0.drv": {
+    "NIX_CFLAGS_COMPILE": " -march=native",
+    "NIX_ENFORCE_NO_NATIVE": false,
+    "NIX_PATH": "nixpkgs=$NIX_STORE/dv2cj491gai627ly6hv9l3s8x2bczcd9-source",
+    "NIX_RUSTFLAGS": "-Zlinker-features=-lld --codegen=target-cpu=native"
+  }
+}
+'''

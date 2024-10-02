@@ -1,0 +1,4 @@
+#pragma once
+
+constexpr auto CXXRS_PROJECT_NAME = "@PROJECT_NAME@";
+constexpr auto CXXRS_PROJECT_VERSION = "@PROJECT_VERSION@";

@@ -1,0 +1,11 @@
+load("//packages/buck/cxxrs:rust.bzl", "cxxrs_rust")
+load("//packages/buck/cxxrs:tag.bzl", "cxxrs_tag")
+
+cxxrs_tag.known()
+
+cxxrs_rust.lib(
+    name="valuable_crate",
+    visibility=["PUBLIC"],
+    srcs=["src/lib.rs"],
+    deps=["//packages/rust/_0/reindeer:valuable"],
+)

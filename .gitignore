@@ -1,0 +1,10 @@
+/.cache/
+/buck-out/
+/node_modules/
+/target/
+
+/.cxxrs*
+/.git
+/compile_commands.json
+/result
+/result-*

@@ -1,0 +1,38 @@
+bin.name = "nix"
+env.add.NIX_CONFIG = "warn-dirty = false"
+args = [
+  "run",
+  "#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver",
+  "--",
+  "eval",
+  "--expr",
+  "builtins.cxxrs.fib._1 builtins",
+]
+status.code = 1
+stderr = """
+...
+error:
+       … while calling the 'cxxrs::fib::_1' builtin
+         at «string»:1:1:
+            1| builtins.cxxrs.fib._1 builtins
+             | ^
+
+       error: cxxrs_nix
+       ├╴at packages/rust/cxxrs/nix_rs/src/lib.rs:81:18
+       │
+       ╰─▶ invalid type: expected one of: [Int, Float], got: Attrs
+           ├╴at packages/rust/cxxrs/nix_rs/src/lib.rs:73:28
+           ╰╴while evaluating: [0] = {
+               abort = «primop abort»;
+               add = «primop add»;
+               addDrvOutputDependencies = «primop addDrvOutputDependencies»;
+               addErrorContext = «primop addErrorContext»;
+               all = «primop all»;
+               any = «primop any»;
+               appendContext = «primop appendContext»;
+               attrNames = «primop attrNames»;
+               attrValues = «primop attrValues»;
+               baseNameOf = «primop baseNameOf»;
+               «107 attributes elided»
+             }
+"""

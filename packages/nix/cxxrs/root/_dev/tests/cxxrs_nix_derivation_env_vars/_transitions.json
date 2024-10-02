@@ -1,0 +1,21 @@
+{
+  "_.nixpkgs/localSystem='x86_64-linux'": {
+    "_.cmake/useLatest=true": {
+      "_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'": null,
+      "_.shell/sizeBracket=2": null
+    },
+    "_.ctx/linker/allowNonLld=true": {
+      "_.ctx/useFullLto=true": { "_.native=false": null },
+      "_.native=false": null
+    },
+    "_.ctx/useFullLto=true": { "_.native=false": null },
+    "_.ctx/withHacks=false": {
+      "_.native=false": null,
+      "_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'": null
+    },
+    "_.native=false": null,
+    "_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'": null,
+    "_.shell/sizeBracket=1": null,
+    "_.shell/sizeBracket=2": null
+  }
+}

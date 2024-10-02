@@ -1,0 +1,13 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = ["_.nixpkgs/localSystem='x86_64-linux'.packages.cargo._1"]
+stdout = '''
+{
+  "$NIX_STORE/w3bic7wc3dg3w6qfq08z7fbxx58xb97l-cxxrs.cargo._1-0.1.0.drv": {
+    "CARGO_BUILD_TARGET": "x86_64-unknown-linux-gnu",
+    "CARGO_PROFILE": "release_panic_unwind",
+    "NIX_CFLAGS_COMPILE": " -march=native",
+    "NIX_ENFORCE_NO_NATIVE": false,
+    "NIX_RUSTFLAGS": "-Zlinker-features=-lld --codegen=target-cpu=native"
+  }
+}
+'''

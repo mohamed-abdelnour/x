@@ -1,0 +1,17 @@
+[package]
+name = "cxxrs_nix_rs"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["staticlib"]
+
+[build-dependencies]
+cxx-build = { workspace = true, optional = true }
+
+[dependencies]
+cxx.workspace = true
+error-stack.workspace = true
+
+[features]
+cxxrs_cxx_fail_fast = ["dep:cxx-build"]

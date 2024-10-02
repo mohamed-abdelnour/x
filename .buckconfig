@@ -1,0 +1,54 @@
+[cells]
+    root = ./
+
+[project]
+    ignore = \
+        .cache/,\
+        .git/,\
+        .ruff_cache,\
+        compile_commands.json,\
+        node_modules/,\
+        packages/rust/_0/reindeer/.cargo/,\
+        packages/rust/_0/reindeer/vendor/**/BUCK,\
+        result,\
+        result-*,\
+        target/
+
+; _Only_ configure `source_digest_algorithm` if it needs to be different from the
+; preferred digest algorithm (the leftmost element in `digest_algorithms`).
+[buck2]
+    ; 1. This is a comma-separated string (e.g., `SHA256,SHA1`).
+    ; 2. Algorithms of the same digest size (e.g., [this] `BLAKE3` and `SHA256`) are
+    ;    mutually exclusive.
+    digest_algorithms = BLAKE3
+    file_watcher = watchman
+
+; ┌────────────────────────────────────────────────────────────────────────────┐
+; │ Prelude-Specific Configuration                                             │
+; └────────────────────────────────────────────────────────────────────────────┘
+[build]
+    execution_platforms = prelude//platforms:default
+
+; Put external cells under `packages/buck/extern/`. It seems to be required for
+; the parent directory of an external cell to exist.
+[cells]
+    prelude = packages/buck/extern/prelude/
+    toolchains = packages/buck/toolchains/
+    unreachable = packages/buck/unreachable/
+
+[cell_aliases]
+    config = prelude
+    ovr_config = prelude
+
+    buck = unreachable
+    fbcode = unreachable
+    fbcode_macros = unreachable
+    fbsource = unreachable
+
+; These are not meant to be edited, still they can be expanded (i.e., `buck2
+; expand-external-cell <CELL>`) to get language server support.
+[external_cells]
+    prelude = bundled
+
+[parser]
+    target_platform_detector_spec = target:root//...->prelude//platforms:default

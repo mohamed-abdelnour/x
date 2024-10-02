@@ -1,0 +1,9 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = ["_.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"]
+stdout = '''
+{
+  "$NIX_STORE/5laihyjr9m8krj50bc5naz0g774ka95m-cxxrs.cmake-0.1.0.drv": {
+    "CXXRS_WITH_HACKS": true
+  }
+}
+'''

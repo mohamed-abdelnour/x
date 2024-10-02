@@ -1,0 +1,49 @@
+load("@prelude//toolchains:cxx.bzl", "system_cxx_toolchain")
+load("@prelude//toolchains:python.bzl", "system_python_bootstrap_toolchain")
+load("@prelude//toolchains:rust.bzl", "system_rust_toolchain")
+
+load("@root//packages/buck/cxxrs:cfg.bzl", "cxxrs_cfg")
+load("@root//packages/buck/cxxrs:tag.bzl", "cxxrs_tag")
+
+cxxrs_tag.known()
+
+system_cxx_toolchain(
+    name="cxx",
+    visibility=["PUBLIC"],
+    cxx_flags=cxxrs_cfg.if_.build_profile(
+        {cxxrs_cfg.const.build_profile.RELEASE: lambda: ["-O3", "-flto=thin"]},
+        lambda: [],
+    )(),
+)
+
+system_python_bootstrap_toolchain(
+    name="python_bootstrap",
+    visibility=["PUBLIC"],
+)
+
+_rustc_flags = ["--cfg=tracing_unstable"]
+cxxrs_cfg.if_.build_profile(
+    {
+        cxxrs_cfg.const.build_profile.RELEASE: lambda: _rustc_flags.extend(
+            (
+                # Mimic the `release` Cargo profile without LTO. This leaves out LTO,
+                # specifically, because configuring it properly requires information about the
+                # current crate.
+                "--codegen=codegen-units=1",
+                "--codegen=opt-level=3",
+                "--codegen=panic=abort",
+                # Mimic _a possible_ set of options injected through the environment variable
+                # `NIX_RUSTFLAGS`.
+                "--codegen=target-cpu=native",
+                "-Zlinker-features=-lld",
+            )
+        )
+    },
+    lambda: None,
+)()
+system_rust_toolchain(
+    name="rust",
+    visibility=["PUBLIC"],
+    default_edition="2021",
+    rustc_flags=_rustc_flags,
+)

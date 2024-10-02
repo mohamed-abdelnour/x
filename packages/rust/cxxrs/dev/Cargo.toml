@@ -1,0 +1,12 @@
+[package]
+name = "cxxrs_dev"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+error-stack.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+valuable.workspace = true

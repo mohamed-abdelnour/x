@@ -1,0 +1,15 @@
+vendor = true
+
+[buck]
+buckfile_imports = """
+load("@prelude//rust:cargo_buildscript.bzl", "buildscript_run")
+
+load("//packages/buck/cxxrs:reindeer.bzl", "cxxrs_reindeer")
+load("//packages/buck/cxxrs:rust.bzl", "cxxrs_rust")
+
+cxxrs_reindeer.affect()
+
+rust_lib = cxxrs_rust.reindeer.lib
+"""
+
+rust_library = "rust_lib"

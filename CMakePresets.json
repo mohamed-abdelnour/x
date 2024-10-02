@@ -1,0 +1,47 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "0",
+      "hidden": true,
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/target/cmake",
+      "warnings": { "uninitialized": true },
+      "cacheVariables": {
+        "CMAKE_COLOR_DIAGNOSTICS": true,
+        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+        "CMAKE_CXX_EXTENSIONS": false,
+        "CMAKE_CXX_SCAN_FOR_MODULES": false,
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_DEFAULT_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": true,
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG": false,
+        "CMAKE_MODULE_PATH": "${sourceDir}/packages/cmake",
+        "CXXRS_WITH_HACKS": true
+      }
+    },
+    {
+      "name": ",",
+      "inherits": "0",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CXXRS_CARGO_TARGET_DIR": "${sourceDir}/target/cargo/release",
+        "CXXRS_CARGO_TARGET_DIR_DEBUG": "${sourceDir}/target/cargo/debug"
+      }
+    },
+    {
+      "name": "nix",
+      "inherits": "0",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER_AR": "$env{AR}",
+        "CMAKE_CXX_COMPILER_RANLIB": "$env{RANLIB}",
+        "CXXRS_WITH_HACKS": "$env{CXXRS_WITH_HACKS}",
+        "_CXXRS_RUNNING_UNDER_NIX": true
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": ",", "configurePreset": "," },
+    { "name": "nix", "configurePreset": "nix" }
+  ]
+}

@@ -1,0 +1,20 @@
+[package]
+name = "_0_reindeer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+cxx = "*"
+error-stack = "*"
+serde_json = "*"
+tracing = "*"
+valuable = "*"
+valuable-serde = "*"
+
+[dependencies.serde]
+version = "*"
+features = ["derive"]
+
+[dependencies.tracing-subscriber]
+version = "*"
+features = ["env-filter", "json", "valuable"]

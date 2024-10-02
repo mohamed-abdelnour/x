@@ -1,0 +1,13 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = [
+  "_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cargo._0",
+]
+stdout = '''
+{
+  "$NIX_STORE/7i1b1rzqzh9fjfi30y9danqa0ni5lmg3-cxxrs.cargo._0-aarch64-unknown-linux-gnu-0.1.0.drv": {
+    "CARGO_BUILD_TARGET": "aarch64-unknown-linux-gnu",
+    "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER": "aarch64-unknown-linux-gnu-cc",
+    "NIX_RUSTFLAGS": "-Zlinker-features=-lld"
+  }
+}
+'''

@@ -1,0 +1,11 @@
+{
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": []
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

@@ -1,0 +1,7 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = ["_.nixpkgs/localSystem='x86_64-linux'.packages._.cxxrs._0.buck2"]
+stdout = '''
+{
+  "$NIX_STORE/377acmw74h5hm36zpaa8ckf8a3sq27yl-buck2-2024-09-16.drv": {}
+}
+'''

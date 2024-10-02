@@ -1,0 +1,14 @@
+bin.name = "cxxrs_nix_derivation_env_vars"
+args = [
+  "_.ctx/useFullLto=true._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0",
+]
+stdout = '''
+{
+  "$NIX_STORE/1cbg1fms7xqlacida6zdpdlxishff256-cxxrs.ad_hoc.lto_0-0.1.0.drv": {
+    "NIX_CFLAGS_COMPILE": " -march=native",
+    "NIX_ENFORCE_NO_NATIVE": false,
+    "NIX_RUSTFLAGS": "-Zlinker-features=-lld --codegen=target-cpu=native",
+    "_CXXRS_LTO": "full"
+  }
+}
+'''

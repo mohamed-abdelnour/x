@@ -1,0 +1,4 @@
+buildscript = [{ rustc_flags = {} }]
+cargo_env = ["CARGO_MANIFEST_DIR"]
+extra_srcs = ["tests/snapshots/doc/**/*.snap"]
+omit_deps = ["anyhow"]

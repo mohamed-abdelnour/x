@@ -1,0 +1,826 @@
+// = cxxrs {{{1
+= cxxrs
+:prewrap!:
+:reproducible:
+:toc:
+:toclevels: 3
+ifdef::_cxxrs[]
+:nofooter:
+:source-highlighter: rouge
+endif::[]
+
+// > User-Defined Document Attributes {{{2
+:_gls-Buck2: https://buck2.build[Buck2]
+:_gls-CMake: https://cmake.org[CMake]
+:_gls-CXX: https://cxx.rs[CXX]
+:_gls-Cargo: https://github.com/rust-lang/cargo[Cargo]
+:_gls-LLD: https://lld.llvm.org[LLD]
+:_gls-Lix: https://lix.systems[Lix]
+:_gls-Mold: https://github.com/rui314/mold[Mold]
+:_gls-Ninja: https://ninja-build.org[Ninja]
+:_gls-Nix: https://github.com/NixOS/nix[Nix]
+:_gls-Reindeer: https://github.com/facebookincubator/reindeer[Reindeer]
+:_gls-direnv: https://github.com/direnv/direnv[direnv]
+:_gls-jq: https://jqlang.github.io/jq[jq]
+:_gls-rust-overlay: https://github.com/oxalica/rust-overlay[rust-overlay]
+
+:_gls-cxxrs_dev: pass:quotes[link:packages/rust/cxxrs/dev[`cxxrs_dev`]]
+:_gls-cxxrs_lto_0: pass:quotes[link:packages/_/ad_hoc/lto_0[`cxxrs_lto_0`]]
+:_gls-cxxrs_lto_1_cxx: pass:quotes[link:packages/cxx/cxxrs/lto_1[`cxxrs_lto_1.cxx`]]
+:_gls-cxxrs_lto_1_rs: pass:quotes[link:packages/rust/cxxrs/lto_1_rs[`cxxrs_lto_1.rs`]]
+:_gls-cxxrs_lto_2_cxx: pass:quotes[link:packages/cxx/cxxrs/lto_2[`cxxrs_lto_2.cxx`]]
+:_gls-cxxrs_lto_2_rs: pass:quotes[link:packages/rust/cxxrs/lto_2_rs[`cxxrs_lto_2.rs`]]
+:_gls-cxxrs_trycmd: pass:quotes[link:packages/rust/cxxrs/trycmd[`cxxrs_trycmd`]]
+
+:_uri-clang_json_compilation_database: https://clang.llvm.org/docs/JSONCompilationDatabase.html
+:_uri-rustc_linker_plugin_lto: https://doc.rust-lang.org/rustc/linker-plugin-lto.html
+
+// > Local-Only Styles {{{2
+ifdef::_cxxrs[]
+++++
+<style>
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: monospace !important;
+    font-size: large !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #000 !important;
+      filter: invert(100%) hue-rotate(180deg) !important;
+    }
+  }
+</style>
+++++
+endif::[]
+
+// == Showcase {{{1
+== Showcase
+
+.Source
+[options="collapsible,open"]
+====
+[,bash]
+----
+(
+    _CROSS="#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver" &&
+        _LOCAL="#_.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver" &&
+        _cxxrs_nix_eval() { nix run "$1" -- eval --expr "$2"; } &&
+            _fmt() { printf '=%.0s' {0..79} && printf '\n: %s\n' "$2" && _cxxrs_nix_eval "$1" "$2" 2>&1 | sed 's/^/| /;s/\s*$//'; } &&
+                _fmt "$_LOCAL" builtins.cxxrs &&
+                _fmt "$_CROSS" 'builtins.genList builtins.cxxrs.fib._1 20' &&
+                _fmt "$_LOCAL" 'let x = 0; in builtins.cxxrs.ptr.eq x x && !(builtins.cxxrs.ptr.eq x 0)' &&
+                _fmt "$_CROSS" 'builtins.cxxrs.fib._1 builtins'
+)
+----
+====
+
+[,text]
+----
+================================================================================
+: builtins.cxxrs
+| { VERSION = "0.1.0"; fib = { _0 = «primop cxxrs::fib::_0»; _1 = «primop cxxrs::fib::_1»; }; ptr = { eq = «primop cxxrs::ptr::eq»; }; }
+================================================================================
+: builtins.genList builtins.cxxrs.fib._1 20
+| [ 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 ]
+================================================================================
+: let x = 0; in builtins.cxxrs.ptr.eq x x && !(builtins.cxxrs.ptr.eq x 0)
+| true
+================================================================================
+: builtins.cxxrs.fib._1 builtins
+| error:
+|        … while calling the 'cxxrs::fib::_1' builtin
+|          at «string»:1:1:
+|             1| builtins.cxxrs.fib._1 builtins
+|              | ^
+|
+|        error: cxxrs_nix
+|        ├╴at packages/rust/cxxrs/nix_rs/src/lib.rs:81:18
+|        │
+|        ╰─▶ invalid type: expected one of: [Int, Float], got: Attrs
+|            ├╴at packages/rust/cxxrs/nix_rs/src/lib.rs:73:28
+|            ╰╴while evaluating: [0] = {
+|                abort = «primop abort»;
+|                add = «primop add»;
+|                addDrvOutputDependencies = «primop addDrvOutputDependencies»;
+|                addErrorContext = «primop addErrorContext»;
+|                all = «primop all»;
+|                any = «primop any»;
+|                appendContext = «primop appendContext»;
+|                attrNames = «primop attrNames»;
+|                attrValues = «primop attrValues»;
+|                baseNameOf = «primop baseNameOf»;
+|                «107 attributes elided»
+|              }
+----
+
+// == Overview {{{1
+== Overview
+
+[NOTE]
+In an attempt to avoid cluttering this document: when we want to execute a
+"non-trivial" (read: not particularly short) command we'll use this
+link:packages/bash/cxxrs/readme.sh[script]. An invocation of the form
+`+./packages/bash/cxxrs/readme.sh [FUNCTION] <ARGS>...+`, executes `FUNCTION`
+defined in that script with arguments `ARGS`.
+
+// === Version Information {{{2
+=== Version Information
+
+* {empty}
++
+[,text]
+----
+rustc 1.82.0-nightly (f8060d282 2024-07-30)
+LLVM version: 18.1.7
+----
+
+* {empty}
++
+[,text]
+----
+clang version 18.1.8
+----
+
+* If you want to build any of the packages with `nix`, then either
+** {_gls-Nix} 2.24+ with features `flakes`, `nix-command` and `pipe-operators`;
+   or
+** {_gls-Lix} 2.91+ with features `flakes`, `nix-command` and `pipe-operator`
+   (__singular__) is required.
+
+[TIP]
+====
+Features can be temporarily added via the `NIX_CONFIG` environment variable.
+
+.Example: adding the `pipe-operators` feature for use with {_gls-Nix}
+[,bash]
+----
+export NIX_CONFIG='extra-experimental-features = pipe-operators'
+----
+====
+
+NOTE: This flake currently exposes packages for `x86_64-linux` with some
+optionally being cross-compiled to `aarch64-unknown-linux-gnu`. Building the
+cross-compiled packages can be expensive, as it generally involves building some
+external packages from source.
+
+// == C++ ↔ Rust {{{1
+== C++ ↔ Rust
+
+// === Cross-Language LTO {{{2
+=== Cross-Language <<:gls.LTO,LTO>>
+
+// ==== TL;DR {{{3
+==== TL;DR
+
+* Using thin <<:gls.LTO,LTO>> seems to give _better_ results than using full
+  <<:gls.LTO,LTO>>.
+* When using {_gls-CXX}, some occurrences of `noexcept` in the generated code
+  prevent functions from being inlined.
+
+// ==== Stage 0 {{{3
+==== Stage 0
+
+{_gls-cxxrs_lto_0} is our control experiment; it follows
+{_uri-rustc_linker_plugin_lto}[linker-plugin-based LTO] as closely as possible.
+This package doesn't use any build tools other than {_gls-Ninja} and invokes the
+compilers manually.
+
+[IMPORTANT]
+{_gls-cxxrs_lto_0} provides us with one key insight: at least with this
+toolchain, using full <<:gls.LTO,LTO>> doesn't result in functions being inlined
+as expected.
+
+* `-flto=thin`
++
+.{_gls-LLD}
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_0 "#_.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0"
+----
+
+[,text]
+----
+dump/cxx.objdump
+14:   e9514: e8 27 02 00 00                 call    0xe9740 <__isoc23_strtol@plt>
+
+dump/rs.objdump
+15:   e9512: e8 a9 01 00 00                 call    0xe96c0 <__isoc23_strtol@plt>
+========================================
+String dump of section '.comment':
+[     0] clang version 18.1.8
+[    16] GCC: (GNU) 13.3.0
+[    28] rustc version 1.82.0-nightly (f8060d282 2024-07-30)
+[    5c] Linker: LLD 18.1.8
+----
+====
++
+.{_gls-Mold}
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_0 "#_.ctx/linker/allowNonLld=true._.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0"
+----
+
+[,text]
+----
+dump/rs.objdump
+15:   e9542: e8 09 19 f6 ff                 call    0x4ae50 <__isoc23_strtol$plt>
+
+dump/cxx.objdump
+14:   e95a4: e8 97 18 f6 ff                 call    0x4ae40 <__isoc23_strtol$plt>
+========================================
+String dump of section '.comment':
+[     0] clang version 18.1.0rc
+[    17] clang version 18.1.8
+[    2c] GCC: (GNU) 13.3.0
+[    3e] mold 2.33.0 (compatible with GNU ld)
+[    64] rustc version 1.82.0-nightly (f8060d282 2024-07-30)
+----
+====
+
+* `-flto=full`
++
+.{_gls-LLD}
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_0 "#_.ctx/useFullLto=true._.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0"
+----
+
+[,text]
+----
+dump/rs.const.objdump
+9:   e94a6: e8 15 00 00 00                  call    0xe94c0 <rs>
+
+dump/cxx.objdump
+14:   e94f0: e8 3b 01 00 00                 call    0xe9630 <__isoc23_strtol@plt>
+16:   e94f8: e8 13 00 00 00                 call    0xe9510 <rs_fib>
+
+dump/cxx.const.objdump
+9:   e9486: e8 15 00 00 00                  call    0xe94a0 <rs_fib>
+
+dump/librs.so.objdump
+8:   4db51: 67 e8 79 ff ff ff               addr32      call    0x4dad0 <cxx_succ>
+
+dump/rs.objdump
+14:   e9510: e8 4b 01 00 00                 call    0xe9660 <__isoc23_strtol@plt>
+16:   e9518: e8 23 00 00 00                 call    0xe9540 <rs>
+
+dump/libcxx.so.objdump
+8:  119b11: e8 8a 01 00 00                  call    0x119ca0 <rs_fib@plt>
+========================================
+String dump of section '.comment':
+[     0] clang version 18.1.8
+[    16] GCC: (GNU) 13.3.0
+[    28] rustc version 1.82.0-nightly (f8060d282 2024-07-30)
+[    5c] Linker: LLD 18.1.8
+----
+====
++
+.{_gls-Mold}
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_0 "#_.ctx/linker/allowNonLld=true._.ctx/useFullLto=true._.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0"
+----
+
+[,text]
+----
+dump/rs.const.objdump
+9:   e9426: e8 05 00 00 00                  call    0xe9430 <rs>
+
+dump/cxx.objdump
+14:   e9440: e8 db 19 f6 ff                 call    0x4ae20 <__isoc23_strtol$plt>
+16:   e9448: e8 13 00 00 00                 call    0xe9460 <rs_fib>
+
+dump/cxx.const.objdump
+9:   e93d6: e8 15 00 00 00                  call    0xe93f0 <rs_fib>
+
+dump/librs.so.objdump
+8:   4d401: ff 15 b9 33 00 00               call    qword ptr [rip + 0x33b9] # 0x507c0 <cxx_succ$got>
+
+dump/rs.objdump
+14:   e9490: e8 cb 19 f6 ff                 call    0x4ae60 <__isoc23_strtol$plt>
+16:   e9498: e8 13 00 00 00                 call    0xe94b0 <rs>
+
+dump/libcxx.so.objdump
+8:  119901: e8 5a 19 f6 ff                  call    0x7b260 <rs_fib$plt>
+========================================
+String dump of section '.comment':
+[     0] clang version 18.1.0rc
+[    17] clang version 18.1.8
+[    2c] GCC: (GNU) 13.3.0
+[    3e] mold 2.33.0 (compatible with GNU ld)
+[    64] rustc version 1.82.0-nightly (f8060d282 2024-07-30)
+----
+====
+
+[NOTE]
+Moving forward, unless otherwise specified, we will be building with _thin_
+<<:gls.LTO>> (which, conveniently, is what {_gls-CMake} chooses for this
+toolchain).
+
+// ==== Stage 1 {{{3
+==== Stage 1
+
+This stage ({_gls-cxxrs_lto_1_cxx}, {_gls-cxxrs_lto_1_rs}) adds build tools
+(namely, {_gls-Cargo} and {_gls-CMake}), but the code still uses hand-written
+bindings. There's nothing notable to learn from here in the context of
+<<:gls.LTO>>, but it acts as a frame of reference for the next stage. That being
+said, now that we're building with {_gls-Cargo} and {_gls-CMake} we can check
+the behaviour when cross-compiling to `aarch64-unknown-linux-gnu`.
+
+.`aarch64-unknown-linux-gnu`
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_1 "#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"
+----
+
+[,assembly]
+----
+
+bin/cxxrs_lto_1:    file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000011570 <main>:
+   11570: 2a1f03e0      mov w0, wzr
+   11574: d65f03c0      ret
+----
+====
+
+// ==== Stage 2 {{{3
+==== Stage 2
+
+This stage ({_gls-cxxrs_lto_2_cxx}, {_gls-cxxrs_lto_2_rs}) adds {_gls-CXX}.
+
+[IMPORTANT]
+Again, this provides us with one key insight: some uses of `noexcept` in the
+generated C++ code prevents functions from being inlined.
+
+* Without "hacks"
++
+.`aarch64-unknown-linux-gnu`
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_2_without_hacks bl "#_.ctx/withHacks=false._.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"
+----
+
+[,text]
+----
+   116a8: 97ffff9b      bl  0x11514 <cxxrs$lto_2$cxxbridge1$succ>
+   116b0: 97ffff99      bl  0x11514 <cxxrs$lto_2$cxxbridge1$succ>
+   116f4: 97ffff8a      bl  0x1151c <cxxrs$lto_2$cxxbridge1$add_to_fib_fst>
+----
+====
++
+.`x86_64-unknown-linux-gnu`
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_2_without_hacks call "#_.ctx/withHacks=false._.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"
+----
+
+[,text]
+----
+   e97c8: e8 b3 fd ff ff                call    0xe9580 <cxxrs$lto_2$cxxbridge1$succ>
+   e97d2: e8 a9 fd ff ff                call    0xe9580 <cxxrs$lto_2$cxxbridge1$succ>
+   e9844: e8 47 fd ff ff                call    0xe9590 <cxxrs$lto_2$cxxbridge1$add_to_fib_fst>
+----
+====
+
+Notice (if you expand one of the above elements) that the functions that don't
+get inlined are generated from the ones in the
+link:packages/rust/cxxrs/lto_2_rs/src/lib.rs#L14-L19[`extern "C++"`] block. Also
+note that their link:packages/cxx/cxxrs/lto_2/include/cxxrs/lto_2/lib.hxx[{cpp}
+declarations] are `noexcept`. I haven't looked into this any further; but if I
+had to guess, it may have something to do with the interaction between `extern
+"C"` (in the generated code) and `noexcept`.
+
+Next, we build link:packages/cmake/cxxrs/cxxbridge.cmake#L17[removing these
+occurrences of `noexcept` from the generated code].
+
+* With "hacks"
++
+.`aarch64-unknown-linux-gnu`
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_2 "#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"
+----
+
+[,assembly]
+----
+
+bin/cxxrs_lto_2:    file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000000116f4 <main>:
+   116f4: 2a1f03e0      mov w0, wzr
+   116f8: d65f03c0      ret
+----
+====
++
+.`x86_64-unknown-linux-gnu`
+[options=collapsible]
+====
+[,bash]
+----
+./packages/bash/cxxrs/readme.sh lto_2 "#_.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.cmake"
+----
+
+[,assembly]
+----
+
+bin/cxxrs_lto_2:    file format elf64-x86-64
+
+Disassembly of section .text:
+
+00000000000e9860 <main>:
+   e9860: 31 c0                         xor eax, eax
+   e9862: c3                            ret
+   e9863: cc                            int3
+   e9864: cc                            int3
+   e9865: cc                            int3
+   e9866: cc                            int3
+   e9867: cc                            int3
+   e9868: cc                            int3
+   e9869: cc                            int3
+   e986a: cc                            int3
+   e986b: cc                            int3
+   e986c: cc                            int3
+   e986d: cc                            int3
+   e986e: cc                            int3
+   e986f: cc                            int3
+----
+====
+
+// === CXX Workflow {{{2
+=== {_gls-CXX} Workflow
+
+To demonstrate we will be building {_gls-cxxrs_lto_2_cxx}—a C++ binary that
+depends on {_gls-cxxrs_lto_2_rs}.
+
+// ==== Cargo + CMake {{{3
+==== {_gls-Cargo} + {_gls-CMake}
+
+// ===== Debug {{{4
+===== Debug
+
+Configure::
+[,bash]
+----
+cmake --preset=,
+----
+
+NOTE: This generates a {_uri-clang_json_compilation_database}[JSON compilation
+database] (__for the entire project__) and creates a link to it named
+`compile_commands.json` at the root of the project.
+
+Build::
+[,bash]
+----
+cargo build --package=cxxrs_lto_2_rs &&
+    cmake --build --preset=, --config=Debug --target=cxxrs_lto_2
+----
+
+[TIP]
+====
+{_gls-CXX} generates code that does some static analysis (for correct
+declarations, for example). With the commands above, that static analysis would
+be triggered at the second step—when building with {_gls-CMake}. Activate the
+`cxxrs_cxx_fail_fast` {_gls-Cargo} feature to trigger that static analysis
+early.
+
+[,bash]
+----
+cargo build --package=cxxrs_lto_2_rs --features=cxxrs_cxx_fail_fast
+----
+
+This comes with the downsides of requiring a build script
+(link:packages/rust/cxxrs/lto_2_rs/build.rs[example]) and having to
+unnecessarily duplicate build logic. This also pulls in additional
+`build-dependencies` that are otherwise not needed.
+====
+
+Run::
+[,bash]
+----
+./target/cmake/packages/cxx/cxxrs/lto_2/Debug/cxxrs_lto_2
+----
+
+// ===== Release {{{4
+===== Release
+
+Configure::
+[,bash]
+----
+cmake --preset=,
+----
+
+NOTE: the configure step is the same as that for a debug build.
+
+Build::
+[,bash]
+----
+cargo build --package=cxxrs_lto_2_rs --config=.cargo/lto.toml --release &&
+    cmake --build --preset=, --target=cxxrs_lto_2
+----
+
+NOTE: `--config=.cargo/lto.toml` can be replaced by any other means of adding
+`--codegen=linker-plugin-lto` (or an equivalent) the compiler flags—using `cargo
+rustc` or the `RUSTFLAGS` environment variable, for example.
+
+Run::
+[,bash]
+----
+./target/cmake/packages/cxx/cxxrs/lto_2/Release/cxxrs_lto_2
+----
+
+// ===== Implementation {{{4
+===== Implementation
+
+The bulk of the implementation is here:
+
+. link:packages/cmake/cxxrs/cxxbridge.cmake[]
+. link:packages/rust/cxxrs/lto_2_rs/CMakeLists.txt[]
+. link:packages/cxx/cxxrs/lto_2/CMakeLists.txt[]
+
+// ==== Buck2 {{{3
+==== {_gls-Buck2}
+
+[TIP]
+====
+To generate a {_uri-clang_json_compilation_database}[JSON compilation database]
+(__for a particular target__) use its `full-compilation-database` sub-target,
+for example:
+
+[,bash]
+----
+buck2 build --out=compile_commands.json packages/cxx/cxxrs/lto_2:cxxrs_lto_2[full-compilation-database]
+----
+====
+
+// ===== Debug {{{4
+===== Debug
+
+Build::
+[,bash]
+----
+buck2 build --config=cxxrs.build_profile=debug packages/cxx/cxxrs/lto_2:cxxrs_lto_2
+----
+
+Run::
+[,bash]
+----
+buck2 run --config-file=packages/buck/mode/debug.ini packages/cxx/cxxrs/lto_2:cxxrs_lto_2
+----
+
+[NOTE]
+====
+* There is no need to build before running.
+* `--config` and `--config-file` showcase two ways of achieving a similar result
+  here (although the link:packages/buck/mode/debug.ini[`modefile`] sets other
+  configuration options).
+====
+
+// ===== Release {{{4
+===== Release
+
+Build::
+[,bash]
+----
+buck2 build packages/cxx/cxxrs/lto_2:cxxrs_lto_2
+----
+
+Run::
+[,bash]
+----
+buck2 run packages/cxx/cxxrs/lto_2:cxxrs_lto_2
+----
+
+// ===== Implementation {{{4
+===== Implementation
+
+The bulk of the implementation is here:
+
+. link:packages/buck/cxxrs/dev.bzl[] (the `_cxxbridge` rule)
+. link:packages/rust/cxxrs/dev/src/action/buck.rs[] (the `Cxxbridge` struct)
+. link:packages/rust/cxxrs/lto_2_rs/BUCK[]
+. link:packages/cxx/cxxrs/lto_2/BUCK[]
+
+// == Buck2 {{{1
+== {_gls-Buck2}
+
+// == Reindeer {{{2
+=== {_gls-Reindeer}
+
+We use {_gls-Reindeer} to generate {_gls-Buck2} targets for {_gls-Cargo}
+dependencies; the workflow for generating targets is as follows:
+
+[,bash]
+----
+(
+    cd packages/rust/_0/reindeer &&
+        reindeer vendor && # <1>
+        reindeer buckify
+)
+----
+<1> only needed if the directory in which dependencies are vendored isn't up to
+    date
+
+For reference:
+
+* a workaround for the dependency specification:
+  `[target."cfg(tracing_unstable)".dependencies.valuable_crate]` (used by
+  https://crates.io/crates/tracing-serde/0.1.3[`tracing-serde`] and
+  https://crates.io/crates/tracing-subscriber/0.3.18[`tracing-subscriber`]) that
+  re-exports the https://crates.io/crates/valuable/0.1.0[`valuable`] crate as
+  `valuable_crate` is link:packages/rust/_0/reindeer/extern/valuable[here]; and
+
+* the fixups used are link:packages/rust/_0/reindeer/fixups[here].
+
+// === Formatting and Linting, Incrementally {{{2
+=== Formatting and Linting, Incrementally
+
+We use {_gls-Buck2} for formatting and __basic__ linting; the actions are
+performed incrementally (only modified files are processed unless the cache is
+invalidated). "Basic" linting here refers to linting that operates on files in
+isolation, not entire projects.
+
+[,bash]
+----
+buck2 targets --config=cxxrs.allow_slow=true : 2>/dev/null
+----
+----
+root//:action.clang-format
+root//:action.clang-tidy
+root//:action.deadnix
+root//:action.nixfmt
+root//:action.prettier.json
+root//:action.prettier.yaml
+root//:action.ruff
+root//:action.rustfmt
+root//:action.shellcheck
+root//:action.shfmt
+root//:action.taplo
+root//:cxxrs_tag.by_type.cxx
+root//:cxxrs_tag.by_type.json
+root//:cxxrs_tag.by_type.nix
+root//:cxxrs_tag.by_type.rust
+root//:cxxrs_tag.by_type.shell
+root//:cxxrs_tag.by_type.starlark
+root//:cxxrs_tag.by_type.toml
+root//:cxxrs_tag.by_type.yaml
+----
+
+."Running" (`buck2 build`) all actions
+[,bash]
+----
+buck2 build :
+----
+
+[NOTE]
+====
+By default, this expects the {_gls-cxxrs_dev} binary to be available in `$PATH`
+(or rather to have been available in `$PATH` when the {_gls-Buck2} daemon was
+started). To build {_gls-cxxrs_dev} with {_gls-Buck2} __then__ run all actions
+use:
+
+[,bash]
+----
+buck2 build --config=cxxrs.bootstrap=buck :
+----
+====
+
+// ==== Implementation {{{3
+==== Implementation
+
+The bulk of the implementation is here:
+
+. link:packages/buck/cxxrs/dev.bzl[] (the `_buck_incremental_command` rule)
+. link:packages/rust/cxxrs/dev/src/action/buck.rs[] (the `IncrementalCommand` struct)
+. link:packages/buck/cxxrs/tag.bzl[]
+. link:packages/buck/cxxrs/root.bzl[]
+. link:BUCK[]
+
+// == Nix {{{1
+== {_gls-Nix}
+
+// === Configuration Transitions {{{2
+=== Configuration Transitions
+
+[quote]
+WHAT IN THE WORLD IS A
+`+"#_.ctx/linker/allowNonLld=true._.ctx/useFullLto=true._.native=false._.nixpkgs/localSystem='x86_64-linux'.packages.ad_hoc.lto_0"+`?
+
+I know it's an abomination, but I wanted to be able to build packages with
+multiple different configurations and managing them got difficult _so we got
+this thing_.
+
+If you're interested in the implementation (of what we'll refer to as
+_configuration transitions_, named after {_gls-Buck2}), see:
+
+. link:packages/nix/cxxrs/cfg/toml_transitions/flake.nix[]
+. link:packages/nix/cxxrs/default.nix[]
+. link:packages/nix/cxxrs/root/_cfg.nix[]
+
+// === Cross-Compilation {{{2
+=== Cross-Compilation
+
+Nothing major, but to point out things that may be helpful:
+
+* we're using
+  link:packages/nix/cxxrs/root/_pkg/cxxrs/_0/rust.nix#L11-L16[`pkgsBuildHost`]
+  with {_gls-rust-overlay}; and
+* relying on a
+  link:packages/nix/cxxrs/root/_pkg/cxxrs/_0/lib/stdenv/recipes.nix[bunch of
+  `stdenv` adaptors] to share logic between derivations.
+
+// === Development {{{2
+=== Development
+
+When using {_gls-direnv}, the default development shell is the result of
+building a `mkShell` derivation with a `stdenv` and no extra packages. To
+customise the development shell, you can add a <<:gls.JSON,JSON>> document named
+`.cxxrs.envrc.json` to the root of the project with an array of arguments to
+pass to {_gls-direnv}'s `use flake` under `.nix.args`.
+
+.Sample `.cxxrs.envrc.json`
+[,json]
+----
+{
+  "nix": {
+    "args": [
+      "#_.cmake/useLatest=true._.nixpkgs/localSystem='x86_64-linux'._.shell/sizeBracket=2.packages.barrel",
+      "--print-build-logs"
+    ]
+  }
+}
+----
+
+NOTE: Using `.cxxrs.envrc.json` requires {_gls-jq}.
+
+// == Testing {{{1
+== Testing
+
+We use {_gls-cxxrs_trycmd} for snapshot testing.
+
+.Running tests
+[,bash]
+----
+cxxrs_trycmd
+----
+
+.Updating snapshots
+[,bash]
+----
+TRYCMD=overwrite cxxrs_trycmd
+----
+
+[NOTE]
+====
+By default, {_gls-cxxrs_trycmd} tests cases matching the glob:
+`+packages/**/*.trycmd.toml+` (currently
+link:packages/nix/cxxrs/root/_dev/tests/cxxrs_nix_derivation_env_vars[here]);
+this can be changed by passing positional command-line arguments for the
+patterns to match.
+
+For example to run _all_ tests (this may be very slow; it involves building
+cross-compiled derivations that build some packages from source):
+
+[,bash]
+----
+cxxrs_trycmd 'packages/**/*.trycmd*.toml'
+----
+====
+
+TIP: {_gls-cxxrs_trycmd} runs tests in parallel, which may sometimes cause a
+little __too__ much contention over {_gls-Nix}'s database and cache; set the
+environment variable
+https://docs.rs/rayon/1.10.0/rayon/fn.max_num_threads.html[`RAYON_NUM_THREADS`]
+to limit the maximum number of threads (in a single thread pool) used.
+
+// == Appendix {{{1
+== Appendix
+
+// === Abbreviations {{{2
+=== Abbreviations
+
+[[:gls.JSON]]JSON:: JavaScript Object Notation
+[[:gls.LTO]]LTO:: Link-Time Optimisation

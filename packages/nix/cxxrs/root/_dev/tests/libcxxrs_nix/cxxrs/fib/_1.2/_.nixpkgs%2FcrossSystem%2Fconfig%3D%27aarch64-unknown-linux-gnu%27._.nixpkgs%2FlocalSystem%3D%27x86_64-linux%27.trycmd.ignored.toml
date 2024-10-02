@@ -1,0 +1,12 @@
+bin.name = "nix"
+args = [
+  "run",
+  "#_.nixpkgs/crossSystem/config='aarch64-unknown-linux-gnu'._.nixpkgs/localSystem='x86_64-linux'.packages.cmake.passthru.tests.nix.driver",
+  "--",
+  "eval",
+  "--expr",
+  "builtins.genList (n: n + 0.9 |> builtins.cxxrs.fib._1) 20",
+]
+stdout = """
+[ 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 ]
+"""

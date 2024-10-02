@@ -1,0 +1,7 @@
+[package]
+name = "cxxrs_lto_1_rs"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["staticlib"]
